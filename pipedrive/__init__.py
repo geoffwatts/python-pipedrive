@@ -33,30 +33,23 @@ class Pipedrive(object):
     def _request(self, endpoint, data, method="POST"):
         if self.api_token:
             data = copy(data)
-            qs = "%s%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, self.api_token)
+            if method in ["POST", "GET"]:
+                qs = "%s%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, self.api_token)
+            elif method in ["PUT", "DELETE"]:
+                qs = "%s%s/%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, data['id'], self.api_token)
+
         else:
             #TODO throw error
             pass
 
         #In the below request, it assumes you entered the data 'correctly'
         # e.g. pipdrive.persons({'method': 'POST', 'name':
-        if method is "POST":
+        if method in ["POST", "PUT"]:
             response, data = self.http.request(qs,
                                                method,
                                                body=json.dumps(data),
-                                               headers={'Content-Type': 'application/json'}
-                                              )
-        elif method is "PUT":
-            qs = "%s%s/%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, data['id'], self.api_token)
-            response, data = self.http.request(qs,
-                                               method,
-                                               body=json.dumps(data),
-                                               headers={'Content-Type': 'application/json'}
-                                              )
-        elif method is "DELETE":
-            qs = "%s%s/%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, data['id'], self.api_token)
-            response, data = self.http.request(qs, method)
-        else: #'GET'
+                                               headers={'Content-Type': 'application/json'})
+        else: #'GET' or 'DELETE'
             response, data = self.http.request(qs, method)
 
         return json.loads(data)

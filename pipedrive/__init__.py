@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from httplib2 import Http
 from urllib import urlencode
 import json
@@ -50,7 +48,7 @@ class Pipedrive(object):
         elif method is "DELETE":
             qs = "%s%s/%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, data['id'], self.api_token)
             response, data = self.http.request(qs, method)
-        else:
+        else: #'GET'
             response, data = self.http.request(qs, method)
 
         return json.loads(data)

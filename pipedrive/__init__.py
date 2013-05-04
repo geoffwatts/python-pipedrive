@@ -24,9 +24,10 @@ class Pipedrive(object):
         data = Dictionary of what to send.
         method = HTTP Method to use. GET, POST, PUT, and DELETE are whats supported
 
-    GET: pipedrive.persons({'method': 'GET'})
     POST: pipedrive.persons({'method': 'POST', 'name': 'YAY', 'email': [{'value': 'yay@pleasework.com'}]})
-
+    PUT: pipedrive.persons({'method': 'PUT', 'name': 'Roger', 'id': 23})
+    DELETE: pipedrive.persons({'method': 'DELETE', 'id': 23})
+    GET: pipedrive.persons({'method': 'GET'})
     '''
 
     def _request(self, endpoint, data, method="POST"):
@@ -39,7 +40,14 @@ class Pipedrive(object):
 
         #In the below request, it assumes you entered the data 'correctly'
         # e.g. pipdrive.persons({'method': 'POST', 'name':
-        if method in ["POST", "PUT"]:
+        if method is "POST":
+            response, data = self.http.request(qs,
+                                               method,
+                                               body=json.dumps(data),
+                                               headers={'Content-Type': 'application/json'}
+                                              )
+        elif method is "PUT":
+            qs = "%s%s/%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, data['id'], self.api_token)
             response, data = self.http.request(qs,
                                                method,
                                                body=json.dumps(data),

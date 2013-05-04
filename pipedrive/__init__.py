@@ -1,20 +1,8 @@
 from httplib2 import Http
-import json
-from copy import copy
-from string import upper
+from json import dumps, loads
+from types import DictType
 
 PIPEDRIVE_API_URL = "https://api.pipedrive.com/v1/"
-
-#TODO remove
-class PipedriveError(Exception):
-    def __init__(self, response):
-        self.response = response
-    def __str__(self):
-        return str(self.response)
-
-#TODO remove
-class IncorrectLoginError(PipedriveError):
-    pass
 
 class Pipedrive(object):
     '''
@@ -30,39 +18,37 @@ class Pipedrive(object):
     PUT: pipedrive.persons({'method': 'PUT', 'name': 'Roger', 'id': 23})
     DELETE: pipedrive.persons({'method': 'DELETE', 'id': 23})
     GET: pipedrive.persons({'method': 'GET'})
+    or
+    GET: pipedrive.persons({'method': 'GET', 'id': 23})
     '''
-
     def _request(self, endpoint, data, method="POST"):
-        if self.api_token:
-            method = upper(method)
-            if method in ["POST", "GET"]:
-                qs = "%s%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, self.api_token)
-            elif method in ["PUT", "DELETE"]:
-                qs = "%s%s/%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, data['id'], self.api_token)
-
-        else:
-            #TODO throw error
-            pass
+        method = method.upper()
+        if method in ["POST", "GET"]: #for if it is a "GET" all request.
+            qs = "%s%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, self.api_token)
+        if method in ["PUT", "DELETE"] or 'id' in data: #This will work for GETing by 'id'
+            qs = "%s%s/%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, data['id'], self.api_token)
 
         #In the below request, it assumes you entered the data 'correctly'
         # e.g. pipdrive.persons({'method': 'POST', 'name': 'Roger'})
         if method in ["POST", "PUT"]:
             response, data = self.http.request(qs,
                                                method,
-                                               body=json.dumps(data),
+                                               body=dumps(data),
                                                headers={'Content-Type': 'application/json'})
         else: #'GET' or 'DELETE'
             response, data = self.http.request(qs, method)
 
-        return json.loads(data)
+        return loads(data)
 
     def __init__(self, login = None, password = None):
         self.http = Http()
+        if login is None:
+            raise Exception('Must include either login/password or API key when instantiating a Pipedrive object')
         if password:
             response = self._request("/auth/login", {"login": login, "password": password})
 
-            if 'error' in response: #TODO don't use custom Exceptions
-                raise IncorrectLoginError(response)
+            if 'error' in response:
+                raise ValueError(response)
 
             self.api_token = response['authorization'][0]['api_token']
         else:
@@ -71,6 +57,8 @@ class Pipedrive(object):
 
     def __getattr__(self, endpoint):
         def wrapper(data):
+            if type(data) is not DictType:
+                raise TypeError('Check your data. This function only accepts dictionaries.')
             if 'method' in data:
                 method = data['method']
                 del data['method']
@@ -78,6 +66,6 @@ class Pipedrive(object):
                 method = "POST"
             response = self._request(endpoint, data, method)
             if 'error' in response:
-                raise PipedriveError(response) #TODO don't use custom Exceptions
+                raise ValueError(response)
             return response
         return wrapper

@@ -47,6 +47,9 @@ class Pipedrive(object):
                                                body=json.dumps(data),
                                                headers={'Content-Type': 'application/json'}
                                               )
+        elif method is "DELETE":
+            qs = "%s%s/%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, data['id'], self.api_token)
+            response, data = self.http.request(qs, method)
         else:
             response, data = self.http.request(qs, method)
 

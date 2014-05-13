@@ -23,6 +23,7 @@ class Pipedrive(object):
     '''
     def _request(self, endpoint, data, method="POST"):
         method = method.upper()
+        endpoint = endpoint.replace('_','/') # Allow for find methods, and be pythonic
         if method in ["POST", "GET"]: #for if it is a "GET" all request.
             qs = "%s%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, self.api_token)
         if method in ["PUT", "DELETE"] or 'id' in data: #This will work for GETing by 'id'

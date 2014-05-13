@@ -1,4 +1,5 @@
 from httplib2 import Http
+import urllib
 from json import dumps, loads
 from types import DictType
 
@@ -25,7 +26,7 @@ class Pipedrive(object):
         method = method.upper()
         endpoint = endpoint.replace('_','/') # Allow for find methods, and be pythonic
         if method in ["POST", "GET"]: #for if it is a "GET" all request.
-            qs = "%s%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, self.api_token)
+            qs = "%s%s?api_token=%s&%s" % (PIPEDRIVE_API_URL, endpoint, self.api_token, urllib.urlencode(data))
         if method in ["PUT", "DELETE"] or 'id' in data: #This will work for GETing by 'id'
             qs = "%s%s/%s?api_token=%s" % (PIPEDRIVE_API_URL, endpoint, data['id'], self.api_token)
 
